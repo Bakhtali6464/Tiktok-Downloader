@@ -2,76 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TikTok HD Video Downloader</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TikTok Video Downloader</title>
   <style>
     :root {
       --primary: #ff0050;
       --primary-dark: #d40042;
-      --secondary: #25D366;
       --text: #333;
       --light-gray: #f5f5f5;
       --gray: #ddd;
-      --dark-gray: #666;
       --error: #e74c3c;
       --success: #2ecc71;
-      --warning: #f39c12;
     }
     
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
       color: var(--text);
       background-color: var(--light-gray);
-      padding: 20px;
+      padding: 15px;
       max-width: 100%;
+      touch-action: manipulation;
     }
     
     .container {
-      max-width: 600px;
+      max-width: 100%;
       margin: 0 auto;
       background: white;
-      padding: 30px;
+      padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
     }
     
     h1 {
       color: var(--primary);
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 28px;
-    }
-    
-    .description {
-      text-align: center;
-      margin-bottom: 25px;
-      color: var(--dark-gray);
+      margin-bottom: 15px;
+      font-size: 22px;
     }
     
     .input-group {
-      margin-bottom: 20px;
-      position: relative;
+      margin-bottom: 15px;
     }
     
     input[type="text"] {
       width: 100%;
-      padding: 15px;
-      border: 2px solid var(--gray);
+      padding: 12px 15px;
+      border: 1px solid var(--gray);
       border-radius: 5px;
       font-size: 16px;
-      transition: border-color 0.3s;
-    }
-    
-    input[type="text"]:focus {
-      border-color: var(--primary);
-      outline: none;
+      -webkit-appearance: none;
     }
     
     button {
@@ -84,228 +71,91 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    
-    button:hover {
-      background-color: var(--primary-dark);
     }
     
     button:disabled {
-      background-color: var(--gray);
-      cursor: not-allowed;
       opacity: 0.7;
     }
     
     #result {
-      margin-top: 25px;
-      min-height: 100px;
+      margin-top: 15px;
+      text-align: center;
     }
     
     .loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin: 20px 0;
-    }
-    
-    .spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
       border-radius: 50%;
-      border-top: 4px solid var(--primary);
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
     }
     
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
     
     .success-message {
       color: var(--success);
-      text-align: center;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       font-weight: bold;
     }
     
     .error-message {
       color: var(--error);
-      text-align: center;
-      margin-bottom: 15px;
-      font-weight: bold;
-    }
-    
-    .warning-message {
-      color: var(--warning);
-      text-align: center;
-      margin-bottom: 15px;
-    }
-    
-    .download-options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    
-    .download-link {
-      display: block;
-      text-align: center;
-      padding: 12px;
-      background-color: var(--primary);
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-      transition: background-color 0.3s;
-    }
-    
-    .download-link:hover {
-      background-color: var(--primary-dark);
-    }
-    
-    .video-preview {
-      width: 100%;
-      max-height: 500px;
-      border-radius: 8px;
-      margin: 15px 0;
-      display: none;
-    }
-    
-    .video-info {
-      margin: 15px 0;
-      padding: 10px;
-      background-color: #f8f9fa;
-      border-radius: 5px;
-    }
-    
-    .tips {
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 5px;
-      margin-top: 20px;
-    }
-    
-    .tips h3 {
       margin-bottom: 10px;
-      color: var(--dark-gray);
-    }
-    
-    .tips ol {
-      padding-left: 20px;
-    }
-    
-    .footer {
-      text-align: center;
-      margin-top: 30px;
-      color: var(--dark-gray);
-      font-size: 14px;
-    }
-    
-    .whatsapp-link {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 8px 15px;
-      background-color: var(--secondary);
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-    }
-    
-    @media (max-width: 480px) {
-      .container {
-        padding: 20px;
-      }
-      
-      h1 {
-        font-size: 24px;
-      }
-      
-      input[type="text"], button {
-        padding: 12px;
-      }
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>TikTok HD Video Downloader</h1>
-    <p class="description">Download TikTok videos without watermark in high quality</p>
+    <h1>TikTok Video Downloader</h1>
     
     <div class="input-group">
-      <input type="text" id="tiktokUrl" placeholder="Paste TikTok link here (e.g., https://vt.tiktok.com/ABC123 or https://www.tiktok.com/@user/video/123456789)">
+      <input type="text" id="tiktokUrl" placeholder="Paste TikTok link here" inputmode="url">
     </div>
     
-    <button id="downloadBtn" onclick="downloadVideo()">
-      <span id="btnText">Download Video</span>
-      <span id="btnIcon" class="icon">↓</span>
-    </button>
+    <button id="downloadBtn">Download Video</button>
     
     <div id="result"></div>
-    
-    <video id="videoPreview" class="video-preview" controls></video>
-    
-    <div class="tips">
-      <h3>How to use:</h3>
-      <ol>
-        <li>Open TikTok app or website</li>
-        <li>Find video you want to download</li>
-        <li>Tap "Share" and copy the link</li>
-        <li>Paste above and click Download</li>
-      </ol>
-    </div>
-    
-    <div class="footer">
-      <p>Free TikTok Video Downloader</p>
-      <a href="https://wa.me/923361476464" class="whatsapp-link">Contact Support</a>
-    </div>
   </div>
 
   <script>
-    // API Configuration
-    const API_ENDPOINT = 'http://localhost:3000/download-video';
+    // API Configuration - Update this to your actual backend URL
+    const API_ENDPOINT = 'https://your-backend-server.com/download-video';
     
     document.addEventListener('DOMContentLoaded', function() {
-      // Check if URL is already in input (from shared target)
-      if (window.location.search.includes('url=')) {
-        const urlParam = new URLSearchParams(window.location.search).get('url');
-        document.getElementById('tiktokUrl').value = decodeURIComponent(urlParam);
-      }
+      const downloadBtn = document.getElementById('downloadBtn');
+      const urlInput = document.getElementById('tiktokUrl');
+      const resultDiv = document.getElementById('result');
       
-      // Add paste event listener
-      document.getElementById('tiktokUrl').addEventListener('paste', handlePaste);
+      // Handle both click and touch events for mobile
+      downloadBtn.addEventListener('click', handleDownload);
+      downloadBtn.addEventListener('touchend', handleDownload);
+      
+      // Auto-focus input on mobile
+      urlInput.focus();
+      
+      // Handle paste events
+      urlInput.addEventListener('paste', function(e) {
+        setTimeout(() => {
+          if (urlInput.value.trim() && isValidTikTokUrl(urlInput.value.trim())) {
+            handleDownload();
+          }
+        }, 100);
+      });
     });
 
-    function handlePaste(e) {
-      setTimeout(() => {
-        const url = document.getElementById('tiktokUrl').value.trim();
-        if (url && isValidTikTokUrl(url)) {
-          // Auto-trigger download if valid URL is pasted
-          downloadVideo();
-        }
-      }, 100);
-    }
-
-    async function downloadVideo() {
+    async function handleDownload() {
       const urlInput = document.getElementById('tiktokUrl');
       const url = urlInput.value.trim();
       const downloadBtn = document.getElementById('downloadBtn');
-      const btnText = document.getElementById('btnText');
-      const btnIcon = document.getElementById('btnIcon');
       const resultDiv = document.getElementById('result');
-      const videoPreview = document.getElementById('videoPreview');
       
       // Clear previous results
       resultDiv.innerHTML = '';
-      videoPreview.style.display = 'none';
       
       // Validate URL
       if (!url) {
@@ -314,72 +164,50 @@
       }
       
       if (!isValidTikTokUrl(url)) {
-        showError('Invalid TikTok URL. Please check and try again.');
+        showError('Invalid TikTok URL');
         return;
       }
       
       // Disable button during processing
       downloadBtn.disabled = true;
-      btnText.textContent = 'Processing...';
-      btnIcon.textContent = '⌛';
-      
-      // Show loading state
-      showLoading();
+      downloadBtn.innerHTML = '<div class="loading"></div> Processing';
       
       try {
         // Process URL (standardize format)
         const processedUrl = processTikTokUrl(url);
         
-        // Show warning for private videos
-        if (processedUrl.includes('private')) {
-          showWarning('This might be a private video. Download may not work.');
+        // For mobile, we need to trigger download differently
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // Mobile devices - open in new tab
+          window.open(`${API_ENDPOINT}?url=${encodeURIComponent(processedUrl)}`, '_blank');
+          showSuccess('Download started in new tab');
+        } else {
+          // Desktop - use fetch API
+          const response = await fetch(`${API_ENDPOINT}?url=${encodeURIComponent(processedUrl)}`);
+          
+          if (!response.ok) {
+            throw new Error('Download failed');
+          }
+          
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = `tiktok-${Date.now()}.mp4`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(downloadUrl);
+          a.remove();
+          
+          showSuccess('Download complete!');
         }
-        
-        // Fetch video from backend
-        const response = await fetch(`${API_ENDPOINT}?url=${encodeURIComponent(processedUrl)}`);
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Download failed');
-        }
-        
-        // Get the video as blob
-        const blob = await response.blob();
-        
-        // Create object URL
-        const videoUrl = URL.createObjectURL(blob);
-        
-        // Show video preview
-        videoPreview.src = videoUrl;
-        videoPreview.style.display = 'block';
-        
-        // Create download link
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `tiktok-${timestamp}.mp4`;
-        
-        resultDiv.innerHTML = `
-          <div class="success-message">
-            <p>✓ Video ready for download!</p>
-          </div>
-          <div class="video-info">
-            <p>Right-click the video above to save it, or use the download button below:</p>
-          </div>
-          <div class="download-options">
-            <a href="${downloadUrl}" class="download-link" download="${filename}">
-              Download HD Video
-            </a>
-          </div>
-        `;
-        
       } catch (error) {
+        showError('Failed to download: ' + (error.message || 'Please try again'));
         console.error('Download error:', error);
-        showError(getErrorMessage(error, url));
       } finally {
         // Re-enable button
         downloadBtn.disabled = false;
-        btnText.textContent = 'Download Video';
-        btnIcon.textContent = '↓';
+        downloadBtn.textContent = 'Download Video';
       }
     }
     
@@ -388,9 +216,7 @@
         /tiktok\.com\/@.+\/video\/\d+/i,
         /tiktok\.com\/t\/[a-z0-9]+/i,
         /vm\.tiktok\.com\/[a-z0-9]+/i,
-        /vt\.tiktok\.com\/[a-z0-9]+/i,
-        /tiktok\.com\/v\/\d+/i,
-        /www\.tiktok\.com\/[a-z]+\/video\/\d+/i
+        /vt\.tiktok\.com\/[a-z0-9]+/i
       ];
       return patterns.some(pattern => pattern.test(url));
     }
@@ -405,66 +231,17 @@
         return `https://www.tiktok.com/v/${videoId}`;
       }
       
-      // Extract video ID from various formats
-      const videoIdMatch = cleanUrl.match(/(?:\/video\/|v\/|t\/)(\d+|\w+)/i);
-      if (videoIdMatch) {
-        return `https://www.tiktok.com/v/${videoIdMatch[1]}`;
-      }
-      
       return cleanUrl;
     }
     
-    function showLoading() {
-      document.getElementById('result').innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          <p>Processing your video...</p>
-          <p class="warning-message">This may take a few moments</p>
-        </div>
-      `;
-    }
-    
-    function showWarning(message) {
+    function showSuccess(message) {
       const resultDiv = document.getElementById('result');
-      resultDiv.innerHTML += `
-        <div class="warning-message">
-          <p>⚠️ ${message}</p>
-        </div>
-      `;
+      resultDiv.innerHTML = `<div class="success-message">${message}</div>`;
     }
     
     function showError(message) {
-      document.getElementById('result').innerHTML = `
-        <div class="error-message">
-          <p>${message}</p>
-        </div>
-        <div class="tips">
-          <h3>Try these solutions:</h3>
-          <ol>
-            <li>Make sure you copied the link correctly</li>
-            <li>Try the "Share" button in TikTok app</li>
-            <li>Check if the video is private or removed</li>
-            <li>Try a different video</li>
-            <li>Wait a few minutes and try again</li>
-          </ol>
-        </div>
-      `;
-    }
-    
-    function getErrorMessage(error, originalUrl) {
-      if (originalUrl.includes('vm.tiktok.com') || originalUrl.includes('vt.tiktok.com')) {
-        return 'Mobile link detected. Please try again or use the "Share" button in TikTok app to copy the link.';
-      }
-      
-      if (error.message.includes('Failed to fetch')) {
-        return 'Connection to server failed. Please check your internet connection.';
-      }
-      
-      if (error.message.includes('Download failed')) {
-        return 'Video download failed. The video might be private or unavailable.';
-      }
-      
-      return error.message || 'Failed to download video. Please check the URL and try again.';
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = `<div class="error-message">${message}</div>`;
     }
   </script>
 </body>
