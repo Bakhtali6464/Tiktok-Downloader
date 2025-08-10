@@ -88,88 +88,64 @@
   async function downloadVideo() {
     const url = document.getElementById('tiktokUrl').value.trim();
     const resultDiv = document.getElementById('result');
-
-    // Clear previous results
-    resultDiv.innerHTML = '';
-    
-    // Validate URL
-    if (!isValidTikTokUrl(url)) {
-      resultDiv.innerHTML = '<p style="color: red;">Please enter a valid TikTok URL!</p>';
-      return;
-    }
-
-    // Show loading spinner
     resultDiv.innerHTML = '<div class="loading"></div><p>Processing your video...</p>';
 
     try {
-      // Standardize the URL format
-      const cleanUrl = standardizeTikTokUrl(url);
+      // Process all TikTok URL formats
+      const processedUrl = processTikTokUrl(url);
       
-      // First verify the API is working
-      const apiCheck = await fetch(`http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}`);
+      // Verify the API
+      const apiCheck = await fetch(`/download-video?url=${encodeURIComponent(processedUrl)}`);
+      if (!apiCheck.ok) throw new Error('API error');
       
-      if (!apiCheck.ok) {
-        throw new Error('Server error');
-      }
+      // Start download
+      startDownload(processedUrl);
       
-      // Create a hidden iframe for silent download
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = `http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}`;
-      document.body.appendChild(iframe);
-      
-      // Show success message
       resultDiv.innerHTML = `
-        <p style="color: green;">✓ Video download started!</p>
-        <p>If download doesn't start automatically:</p>
-        <a href="http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}" 
-           style="color: #ff0050; text-decoration: underline;">
-           Click here to download
-        </a>
+        <p style="color: green;">✓ Download started!</p>
+        <p>If it doesn't start automatically:</p>
+        <a href="/download-video?url=${encodeURIComponent(processedUrl)}" 
+           class="download-link">Click to download</a>
       `;
-      
     } catch (error) {
       resultDiv.innerHTML = `
-        <p style="color: red;">Error: Failed to process video.</p>
-        <p>Try this:</p>
-        <ol style="text-align: left; display: inline-block;">
-          <li>Make sure URL is from a public video</li>
-          <li>Try the "Share" button and copy URL again</li>
-          <li>Try a different video</li>
+        <p style="color: red;">⚠️ Download failed</p>
+        <p>Try:</p>
+        <ol class="error-tips">
+          <li>Using the "Share" → "Copy link" option</li>
+          <li>Making sure the video isn't private</li>
+          <li>Trying a different video</li>
         </ol>
       `;
     }
   }
 
-  // Helper function to validate TikTok URLs
-  function isValidTikTokUrl(url) {
-    const patterns = [
-      /tiktok\.com\/@.+\/video\/\d+/,
-      /vm\.tiktok\.com\/\w+/,
-      /vt\.tiktok\.com\/\w+/,
-      /www\.tiktok\.com\/t\/\w+/
-    ];
-    return patterns.some(pattern => pattern.test(url));
+  // Processes all TikTok URL formats
+  function processTikTokUrl(url) {
+    // Mobile short links (vt.tiktok.com, vm.tiktok.com)
+    if (url.includes('vt.tiktok.com') || url.includes('vm.tiktok.com')) {
+      return `https://www.tiktok.com/v/${url.split('/').pop()}`;
+    }
+    
+    // Web URLs - clean parameters and extract video ID
+    if (url.includes('tiktok.com')) {
+      const videoId = url.match(/\/video\/(\d+)/)?.[1] || 
+                     url.match(/\/t\/(\w+)/)?.[1] ||
+                     url.match(/\/(\d+)(?:\?|$)/)?.[1];
+      if (videoId) return `https://www.tiktok.com/v/${videoId}`;
+    }
+    
+    throw new Error('Invalid TikTok URL');
   }
 
-  // Helper function to standardize TikTok URLs
-  function standardizeTikTokUrl(url) {
-    // Handle mobile short links (vm.tiktok.com, vt.tiktok.com)
-    if (url.includes('vm.tiktok.com') || url.includes('vt.tiktok.com')) {
-      return url.split('?')[0]; // Remove any parameters
-    }
-    
-    // Handle web URLs
-    if (url.includes('tiktok.com')) {
-      // Extract the video ID from various URL formats
-      const videoIdMatch = url.match(/\/(video|t)\/(\d+|\w+)/);
-      if (videoIdMatch) {
-        return `https://www.tiktok.com/@placeholder/video/${videoIdMatch[2]}`;
-      }
-    }
-    
-    // Return original URL if no standardization needed
-    return url.split('?')[0];
+  // Starts the download
+  function startDownload(url) {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = `/download-video?url=${encodeURIComponent(url)}`;
+    document.body.appendChild(iframe);
+    setTimeout(() => iframe.remove(), 10000);
   }
-</script></body>
+</script>
+</body>
 </html>
