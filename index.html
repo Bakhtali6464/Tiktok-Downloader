@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TikTok HD Downloader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      background: #ff0050;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+    }
+    a {
+      color: #ff0050;
+    }
+  </style>
+</head>
+<body>
+  <h1>TikTok HD Video Downloader</h1>
+  <input type="text" id="tiktokUrl" placeholder="Paste TikTok URL here...">
+  <button onclick="downloadVideo()">Download</button>
+  <div id="result"></div>
+
+<script>
+  async function downloadVideo() {
+    const url = document.getElementById('tiktokUrl').value;
+    const resultDiv = document.getElementById('result');
+
+    if (!url.includes('tiktok.com')) {
+      resultDiv.innerHTML = '<p style="color: red;">Please enter a valid TikTok URL!</p>';
+      return;
+    }
+
+    try {
+      // Redirect to the backend download endpoint
+      window.location.href = `http://localhost:3000/download-video?url=${encodeURIComponent(url)}`;
+    } catch (error) {
+      resultDiv.innerHTML = '<p style="color: red;">Failed to download. Try again.</p>';
+    }
+  }
+</script>
+</body>
+</html>
