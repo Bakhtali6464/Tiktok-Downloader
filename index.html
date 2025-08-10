@@ -93,7 +93,7 @@
     resultDiv.innerHTML = '';
     
     // Validate URL
-    if (!url.includes('tiktok.com')) {
+    if (!isValidTikTokUrl(url)) {
       resultDiv.innerHTML = '<p style="color: red;">Please enter a valid TikTok URL!</p>';
       return;
     }
@@ -102,8 +102,8 @@
     resultDiv.innerHTML = '<div class="loading"></div><p>Processing your video...</p>';
 
     try {
-      // Clean the URL by removing query parameters
-      const cleanUrl = url.split('?')[0];
+      // Standardize the URL format
+      const cleanUrl = standardizeTikTokUrl(url);
       
       // First verify the API is working
       const apiCheck = await fetch(`http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}`);
@@ -131,15 +131,45 @@
     } catch (error) {
       resultDiv.innerHTML = `
         <p style="color: red;">Error: Failed to process video.</p>
-        <p>Possible solutions:</p>
-        <ul style="text-align: left; display: inline-block;">
-          <li>Try again with a different URL</li>
-          <li>Remove any extra parameters after '?' in the URL</li>
-          <li>Check if the video is private or removed</li>
-        </ul>
+        <p>Try this:</p>
+        <ol style="text-align: left; display: inline-block;">
+          <li>Make sure URL is from a public video</li>
+          <li>Try the "Share" button and copy URL again</li>
+          <li>Try a different video</li>
+        </ol>
       `;
     }
   }
-</script>
-</body>
+
+  // Helper function to validate TikTok URLs
+  function isValidTikTokUrl(url) {
+    const patterns = [
+      /tiktok\.com\/@.+\/video\/\d+/,
+      /vm\.tiktok\.com\/\w+/,
+      /vt\.tiktok\.com\/\w+/,
+      /www\.tiktok\.com\/t\/\w+/
+    ];
+    return patterns.some(pattern => pattern.test(url));
+  }
+
+  // Helper function to standardize TikTok URLs
+  function standardizeTikTokUrl(url) {
+    // Handle mobile short links (vm.tiktok.com, vt.tiktok.com)
+    if (url.includes('vm.tiktok.com') || url.includes('vt.tiktok.com')) {
+      return url.split('?')[0]; // Remove any parameters
+    }
+    
+    // Handle web URLs
+    if (url.includes('tiktok.com')) {
+      // Extract the video ID from various URL formats
+      const videoIdMatch = url.match(/\/(video|t)\/(\d+|\w+)/);
+      if (videoIdMatch) {
+        return `https://www.tiktok.com/@placeholder/video/${videoIdMatch[2]}`;
+      }
+    }
+    
+    // Return original URL if no standardization needed
+    return url.split('?')[0];
+  }
+</script></body>
 </html>
