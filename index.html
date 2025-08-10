@@ -102,26 +102,41 @@
     resultDiv.innerHTML = '<div class="loading"></div><p>Processing your video...</p>';
 
     try {
-      // First check if the API is working
-      const apiCheck = await fetch(`http://localhost:3000/download-video?url=${encodeURIComponent(url)}`);
+      // Clean the URL by removing query parameters
+      const cleanUrl = url.split('?')[0];
+      
+      // First verify the API is working
+      const apiCheck = await fetch(`http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}`);
       
       if (!apiCheck.ok) {
         throw new Error('Server error');
       }
       
-      // If successful, redirect to download
-      window.location.href = `http://localhost:3000/download-video?url=${encodeURIComponent(url)}`;
+      // Create a hidden iframe for silent download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = `http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}`;
+      document.body.appendChild(iframe);
+      
+      // Show success message
+      resultDiv.innerHTML = `
+        <p style="color: green;">✓ Video download started!</p>
+        <p>If download doesn't start automatically:</p>
+        <a href="http://localhost:3000/download-video?url=${encodeURIComponent(cleanUrl)}" 
+           style="color: #ff0050; text-decoration: underline;">
+           Click here to download
+        </a>
+      `;
       
     } catch (error) {
       resultDiv.innerHTML = `
-        <p style="color: red;">Error: Failed to download video.</p>
-        <p>Possible reasons:</p>
+        <p style="color: red;">Error: Failed to process video.</p>
+        <p>Possible solutions:</p>
         <ul style="text-align: left; display: inline-block;">
-          <li>Server is not running</li>
-          <li>Video is private or removed</li>
-          <li>API service is down</li>
+          <li>Try again with a different URL</li>
+          <li>Remove any extra parameters after '?' in the URL</li>
+          <li>Check if the video is private or removed</li>
         </ul>
-        <p>Try again later or contact support.</p>
       `;
     }
   }
