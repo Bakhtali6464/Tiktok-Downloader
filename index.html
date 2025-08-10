@@ -15,6 +15,7 @@
       --dark-gray: #666;
       --error: #e74c3c;
       --success: #2ecc71;
+      --warning: #f39c12;
     }
     
     * {
@@ -56,6 +57,7 @@
     
     .input-group {
       margin-bottom: 20px;
+      position: relative;
     }
     
     input[type="text"] {
@@ -83,6 +85,10 @@
       font-weight: bold;
       cursor: pointer;
       transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     
     button:hover {
@@ -92,6 +98,7 @@
     button:disabled {
       background-color: var(--gray);
       cursor: not-allowed;
+      opacity: 0.7;
     }
     
     #result {
@@ -126,18 +133,32 @@
       color: var(--success);
       text-align: center;
       margin-bottom: 15px;
+      font-weight: bold;
     }
     
     .error-message {
       color: var(--error);
       text-align: center;
       margin-bottom: 15px;
+      font-weight: bold;
+    }
+    
+    .warning-message {
+      color: var(--warning);
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    
+    .download-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
     }
     
     .download-link {
       display: block;
       text-align: center;
-      margin-top: 15px;
       padding: 12px;
       background-color: var(--primary);
       color: white;
@@ -149,6 +170,21 @@
     
     .download-link:hover {
       background-color: var(--primary-dark);
+    }
+    
+    .video-preview {
+      width: 100%;
+      max-height: 500px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: none;
+    }
+    
+    .video-info {
+      margin: 15px 0;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
     }
     
     .tips {
@@ -208,9 +244,14 @@
       <input type="text" id="tiktokUrl" placeholder="Paste TikTok link here (e.g., https://vt.tiktok.com/ABC123 or https://www.tiktok.com/@user/video/123456789)">
     </div>
     
-    <button id="downloadBtn" onclick="downloadVideo()">Download Video</button>
+    <button id="downloadBtn" onclick="downloadVideo()">
+      <span id="btnText">Download Video</span>
+      <span id="btnIcon" class="icon">↓</span>
+    </button>
     
     <div id="result"></div>
+    
+    <video id="videoPreview" class="video-preview" controls></video>
     
     <div class="tips">
       <h3>How to use:</h3>
@@ -229,22 +270,42 @@
   </div>
 
   <script>
+    // API Configuration
+    const API_ENDPOINT = 'http://localhost:3000/download-video';
+    
     document.addEventListener('DOMContentLoaded', function() {
       // Check if URL is already in input (from shared target)
       if (window.location.search.includes('url=')) {
         const urlParam = new URLSearchParams(window.location.search).get('url');
         document.getElementById('tiktokUrl').value = decodeURIComponent(urlParam);
       }
+      
+      // Add paste event listener
+      document.getElementById('tiktokUrl').addEventListener('paste', handlePaste);
     });
+
+    function handlePaste(e) {
+      setTimeout(() => {
+        const url = document.getElementById('tiktokUrl').value.trim();
+        if (url && isValidTikTokUrl(url)) {
+          // Auto-trigger download if valid URL is pasted
+          downloadVideo();
+        }
+      }, 100);
+    }
 
     async function downloadVideo() {
       const urlInput = document.getElementById('tiktokUrl');
       const url = urlInput.value.trim();
       const downloadBtn = document.getElementById('downloadBtn');
+      const btnText = document.getElementById('btnText');
+      const btnIcon = document.getElementById('btnIcon');
       const resultDiv = document.getElementById('result');
+      const videoPreview = document.getElementById('videoPreview');
       
       // Clear previous results
       resultDiv.innerHTML = '';
+      videoPreview.style.display = 'none';
       
       // Validate URL
       if (!url) {
@@ -259,6 +320,8 @@
       
       // Disable button during processing
       downloadBtn.disabled = true;
+      btnText.textContent = 'Processing...';
+      btnIcon.textContent = '⌛';
       
       // Show loading state
       showLoading();
@@ -267,34 +330,67 @@
         // Process URL (standardize format)
         const processedUrl = processTikTokUrl(url);
         
-        // Verify API is working
-        const apiCheck = await checkApiStatus(processedUrl);
-        if (!apiCheck.ok) {
-          throw new Error('API not responding');
+        // Show warning for private videos
+        if (processedUrl.includes('private')) {
+          showWarning('This might be a private video. Download may not work.');
         }
         
-        // Start download
-        startDownload(processedUrl);
+        // Fetch video from backend
+        const response = await fetch(`${API_ENDPOINT}?url=${encodeURIComponent(processedUrl)}`);
         
-        // Show success
-        showSuccess(processedUrl);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Download failed');
+        }
+        
+        // Get the video as blob
+        const blob = await response.blob();
+        
+        // Create object URL
+        const videoUrl = URL.createObjectURL(blob);
+        
+        // Show video preview
+        videoPreview.src = videoUrl;
+        videoPreview.style.display = 'block';
+        
+        // Create download link
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `tiktok-${timestamp}.mp4`;
+        
+        resultDiv.innerHTML = `
+          <div class="success-message">
+            <p>✓ Video ready for download!</p>
+          </div>
+          <div class="video-info">
+            <p>Right-click the video above to save it, or use the download button below:</p>
+          </div>
+          <div class="download-options">
+            <a href="${downloadUrl}" class="download-link" download="${filename}">
+              Download HD Video
+            </a>
+          </div>
+        `;
+        
       } catch (error) {
         console.error('Download error:', error);
         showError(getErrorMessage(error, url));
       } finally {
         // Re-enable button
         downloadBtn.disabled = false;
+        btnText.textContent = 'Download Video';
+        btnIcon.textContent = '↓';
       }
     }
     
     function isValidTikTokUrl(url) {
       const patterns = [
-        /tiktok\.com\/@.+\/video\/\d+/i,       // Standard web URL
-        /tiktok\.com\/t\/[a-z0-9]+/i,          // Shortened web URL
-        /vm\.tiktok\.com\/[a-z0-9]+/i,          // Mobile share link
-        /vt\.tiktok\.com\/[a-z0-9]+/i,          // Mobile share link variant
-        /tiktok\.com\/v\/\d+/i,                 // Alternative video format
-        /www\.tiktok\.com\/[a-z]+\/video\/\d+/i // International domains
+        /tiktok\.com\/@.+\/video\/\d+/i,
+        /tiktok\.com\/t\/[a-z0-9]+/i,
+        /vm\.tiktok\.com\/[a-z0-9]+/i,
+        /vt\.tiktok\.com\/[a-z0-9]+/i,
+        /tiktok\.com\/v\/\d+/i,
+        /www\.tiktok\.com\/[a-z]+\/video\/\d+/i
       ];
       return patterns.some(pattern => pattern.test(url));
     }
@@ -318,48 +414,22 @@
       return cleanUrl;
     }
     
-    async function checkApiStatus(url) {
-      try {
-        return await fetch(`/api/check?url=${encodeURIComponent(url)}`, {
-          method: 'HEAD',
-          cache: 'no-cache'
-        });
-      } catch (error) {
-        throw new Error('Connection failed');
-      }
-    }
-    
-    function startDownload(url) {
-      // Method 1: Hidden iframe (works in most cases)
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = `/download?url=${encodeURIComponent(url)}`;
-      document.body.appendChild(iframe);
-      setTimeout(() => iframe.remove(), 30000);
-      
-      // Method 2: Window location (fallback)
-      setTimeout(() => {
-        window.location.href = `/download?url=${encodeURIComponent(url)}`;
-      }, 1000);
-    }
-    
     function showLoading() {
       document.getElementById('result').innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
           <p>Processing your video...</p>
+          <p class="warning-message">This may take a few moments</p>
         </div>
       `;
     }
     
-    function showSuccess(url) {
-      document.getElementById('result').innerHTML = `
-        <div class="success-message">
-          <p>✓ Video download started!</p>
+    function showWarning(message) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML += `
+        <div class="warning-message">
+          <p>⚠️ ${message}</p>
         </div>
-        <a href="/download?url=${encodeURIComponent(url)}" class="download-link" download>
-          Click here if download doesn't start automatically
-        </a>
       `;
     }
     
@@ -375,6 +445,7 @@
             <li>Try the "Share" button in TikTok app</li>
             <li>Check if the video is private or removed</li>
             <li>Try a different video</li>
+            <li>Wait a few minutes and try again</li>
           </ol>
         </div>
       `;
@@ -385,15 +456,15 @@
         return 'Mobile link detected. Please try again or use the "Share" button in TikTok app to copy the link.';
       }
       
-      if (error.message.includes('Connection failed')) {
-        return 'Server connection failed. Please try again later.';
+      if (error.message.includes('Failed to fetch')) {
+        return 'Connection to server failed. Please check your internet connection.';
       }
       
-      if (error.message.includes('API not responding')) {
-        return 'Service temporarily unavailable. Please try again later.';
+      if (error.message.includes('Download failed')) {
+        return 'Video download failed. The video might be private or unavailable.';
       }
       
-      return 'Failed to download video. Please check the URL and try again.';
+      return error.message || 'Failed to download video. Please check the URL and try again.';
     }
   </script>
 </body>
